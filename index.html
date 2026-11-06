@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#302748">
+  <title>STARBOUND!</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <main class="game-container">
+
+ 
+    <section id="home-screen" class="screen active">
+
+      <div class="home-sparkle sparkle-one">✦</div>
+      <div class="home-sparkle sparkle-two">✧</div>
+
+      <div class="logo" aria-hidden="true">
+        <span class="logo-star">✦</span>
+      </div>
+
+      <h1>STARBOUND<span>!</span></h1>
+
+      <p class="creator">Created by Pulokali Achumi</p>
+      <p class="intro">A tiny endless adventure.</p>
+
+     
+      <div class="home-character-wrap" aria-label="Your STARBOUND adventurer">
+        <span class="character-sparkle character-sparkle-left">✦</span>
+        <canvas id="home-character" width="100" height="120"></canvas>
+        <span class="character-sparkle character-sparkle-right">✧</span>
+      </div>
+
+      <div class="player-name-box">
+        <label for="player-name">YOUR STARBOUND NAME</label>
+
+        <input
+          id="player-name"
+          type="text"
+          maxlength="20"
+          placeholder="Enter your name..."
+          autocomplete="nickname"
+        >
+
+        <button id="save-player-name" class="name-save-button">
+          SAVE NAME ♡
+        </button>
+
+        <p id="name-status" class="name-status">
+          Choose a name to join the STARBOUND community!
+        </p>
+      </div>
+
+    
+      <button id="home-play-button" class="main-button home-play-button" onclick="startGame()">
+        ✦ PLAY ✦
+      </button>
+
+      <!-- Real homepage navigation buttons -->
+      <div class="home-navigation">
+        <button id="home-leaderboard-button" class="home-nav-button">
+          <span class="nav-icon">🏆</span>
+          LEADERBOARD
+        </button>
+
+        <button id="home-settings-button" class="home-nav-button">
+          <span class="nav-icon">⚙</span>
+          SETTINGS
+        </button>
+      </div>
+
+    
+      <div class="home-stats">
+        <div>
+          <span class="stat-number" id="home-best">0</span>
+          <span class="stat-label">PERSONAL BEST</span>
+        </div>
+
+        <div>
+          <span class="stat-number" id="home-coins">0</span>
+          <span class="stat-label">TOTAL COINS</span>
+        </div>
+
+        <div>
+          <span class="stat-number" id="home-runs">0</span>
+          <span class="stat-label">RUNS</span>
+        </div>
+      </div>
+
+      <section id="home-settings-panel" class="home-extra-panel" hidden>
+        <div class="panel-heading">
+          <h2>✦ SETTINGS ✦</h2>
+          <button class="panel-close-button" id="close-settings-button" aria-label="Close settings">×</button>
+        </div>
+
+        <div class="home-setting-row">
+          <label for="home-music-volume">♫ MUSIC VOLUME</label>
+          <input id="home-music-volume" type="range" min="0" max="100" value="35">
+        </div>
+
+        <div class="home-setting-row">
+          <label for="home-effects-volume">♪ SOUND EFFECTS</label>
+          <input id="home-effects-volume" type="range" min="0" max="100" value="65">
+        </div>
+
+        <button id="home-mute-button" class="home-setting-button">
+          MUTE ALL
+        </button>
+
+        <div class="settings-help">
+          <h3>HOW TO PLAY</h3>
+          <p>SPACE / ↑ — Jump</p>
+          <p>Jump again — Double jump</p>
+          <p>↓ — Sky dunk while airborne</p>
+          <p>Collect coins and avoid obstacles!</p>
+        </div>
+      </section>
+
+      <section id="home-leaderboard-panel" class="home-extra-panel" hidden>
+        <div class="panel-heading">
+          <h2>✦ STARBOUND COMMUNITY ✦</h2>
+          <button class="panel-close-button" id="close-leaderboard-button" aria-label="Close leaderboard">×</button>
+        </div>
+
+        <p class="leaderboard-subtitle">
+          Every traveler has a place in the stars.
+        </p>
+
+        <div class="leaderboard-search">
+          <input
+            id="leaderboard-search"
+            type="search"
+            placeholder="Search a player..."
+            maxlength="20"
+          >
+
+          <button id="leaderboard-search-button">SEARCH</button>
+        </div>
+
+        <div id="online-player-info" class="online-player-info">
+          Connecting to the STARBOUND community...
+        </div>
+
+        <div id="online-leaderboard-list" class="online-leaderboard-list">
+          Loading players...
+        </div>
+
+        <button id="leaderboard-load-more" class="load-more-button" hidden>
+          LOAD MORE
+        </button>
+
+        <p id="leaderboard-status" class="leaderboard-status"></p>
+      </section>
+
+      <p class="footer">Made with a little stardust. ♡</p>
+    </section>
+    
+    <section id="game-screen" class="screen">
+
+      <div class="game-top">
+        <div class="score-group">
+          <div class="score">★ <span id="score">0</span></div>
+          <div class="best-score">BEST <span id="game-best">0</span></div>
+        </div>
+
+        <div class="game-actions">
+          <div class="coin-counter">● <span id="coins">0</span></div>
+
+          <button id="sound-button" class="icon-button"
+            onclick="toggleSoundPanel()" aria-label="Sound settings">♫</button>
+
+          <button id="pause-button" class="pause-button"
+            onclick="togglePause()" aria-label="Pause">Ⅱ</button>
+        </div>
+      </div>
+
+      <div id="sound-panel" class="sound-panel">
+        <div class="sound-row">
+          <label for="music-volume">MUSIC</label>
+          <input id="music-volume" type="range" min="0" max="100" value="35">
+        </div>
+
+        <div class="sound-row">
+          <label for="effects-volume">EFFECTS</label>
+          <input id="effects-volume" type="range" min="0" max="100" value="65">
+        </div>
+
+        <button class="mute-button" id="mute-button" onclick="toggleMute()">
+          MUTE ALL
+        </button>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="gameCanvas" width="800" height="360"
+          aria-label="STARBOUND endless runner game"></canvas>
+
+        <div id="pause-overlay" class="overlay">
+          <div class="overlay-card">
+            <h2>PAUSED</h2>
+            <p>Take a little break.</p>
+            <button class="main-button" onclick="togglePause()">RESUME</button>
+            <button class="back-button" onclick="restartGame()">↻ RESTART</button>
+            <button class="back-button" onclick="goHome()">← HOME</button>
+          </div>
+        </div>
+
+        <div id="game-over" class="overlay">
+          <div class="overlay-card">
+            <h2>RUN OVER</h2>
+            <p>Score <strong id="final-score">0</strong></p>
+            <p>Coins <strong id="final-coins">0</strong></p>
+            <p>Best <strong id="final-best">0</strong></p>
+            <p id="record-message" class="record-message"></p>
+            <button class="main-button" onclick="restartGame()">PLAY AGAIN</button>
+            <button class="back-button" onclick="goHome()">← HOME</button>
+          </div>
+        </div>
+      </div>
+
+      <p id="game-message">SPACE / ↑ TO JUMP · ↓ TO SKY DUNK</p>
+
+      <div class="mobile-controls">
+        <button id="dunk-button" class="control-button secondary-control">
+          DUNK ↓
+        </button>
+        <button id="jump-button" class="control-button">
+          JUMP ↑
+        </button>
+      </div>
+
+      <div class="game-footer">
+        <span>● <span id="run-coins">0</span> collected this run</span>
+        <span id="difficulty-label">EASY</span>
+      </div>
+
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="game.js"></script>
+  <script src="online.js"></script>
+  <script src="home.js"></script>
+</body>
+</html>
