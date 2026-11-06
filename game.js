@@ -1,3 +1,4 @@
+
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const $ = id => document.getElementById(id);
@@ -9,13 +10,35 @@ const STORAGE_KEY = "starbound-player-stats-v2";
 
 let stats = loadStats();
 let player, obstacles = [], coins = [], popups = [];
-let score = 0, runCoins = 0, speed = 4, frame = 0;
-let spawnTimer = 80, coinTimer = 95;
-let running = false, paused = false, runSaved = false;
-let animationId = null, combo = 0, nextComboBonus = 2;
-let musicVolume = 0.35, effectsVolume = 0.65, muted = false;
-let audioContext = null, musicTimer = null, musicStep = 0;
+
+let score = 0;
+let runCoins = 0;
+let speed = 4;
+let frame = 0;
+
+let spawnTimer = 80;
+let coinTimer = 95;
+
+let birdQueue = [];
+let birdQueueTimer = 0;
+
+let running = false;
+let paused = false;
+let runSaved = false;
+
+let animationId = null;
+
+let musicVolume = 0.35;
+let effectsVolume = 0.65;
+let muted = false;
+
+let audioContext = null;
+let musicTimer = null;
+let musicStep = 0;
+
 let newRecord = false;
+
+/* SAVE DATA */
 
 function loadStats() {
   try {
@@ -27,7 +50,12 @@ function loadStats() {
       ...JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}")
     };
   } catch {
-    return { best: 0, totalCoins: 0, runs: 0, creatures: [] };
+    return {
+      best: 0,
+      totalCoins: 0,
+      runs: 0,
+      creatures: []
+    };
   }
 }
 
@@ -50,15 +78,20 @@ function updateStatsDisplay() {
 
 updateStatsDisplay();
 
+/* SCREENS */
+
 function showScreen(id) {
-  ["home-screen", "game-screen"].forEach(screenId =>
-    $(screenId).classList.toggle("active", screenId === id)
-  );
+  ["home-screen", "game-screen"].forEach(screenId => {
+    $(screenId).classList.toggle("active", screenId === id);
+  });
 }
+
+/* START GAME */
 
 function startGame() {
   cancelAnimationFrame(animationId);
   stopMusic();
+
   showScreen("game-screen");
 
   player = {
@@ -67,23 +100,23 @@ function startGame() {
     width: 34,
     height: 48,
     velocityY: 0,
-    jumps: 0,
-    dunking: false,
-    dunkHit: false
+    jumps: 0
   };
 
   obstacles = [];
   coins = [];
   popups = [];
 
+  birdQueue = [];
+  birdQueueTimer = 0;
+
   score = 0;
   runCoins = 0;
   speed = 4;
   frame = 0;
-  spawnTimer = 70;
+
+  spawnTimer = 100;
   coinTimer = 90;
-  combo = 0;
-  nextComboBonus = 2;
 
   running = true;
   paused = false;
@@ -93,11 +126,14 @@ function startGame() {
   $("pause-overlay").classList.remove("show");
   $("game-over").classList.remove("show");
   $("sound-panel").classList.remove("show");
+
   $("pause-button").textContent = "Ⅱ";
 
   stats.runs++;
+
   saveStats();
   updateHUD();
+
   startMusic();
   draw();
 }
@@ -129,11 +165,15 @@ function saveRun() {
   runSaved = true;
 
   const finalScore = Math.floor(score);
+
   newRecord = finalScore > stats.best;
+
   stats.best = Math.max(stats.best, finalScore);
 
   saveStats();
 }
+
+/* PAUSE */
 
 function togglePause() {
   if (!running && !paused) return;
@@ -141,6 +181,7 @@ function togglePause() {
   paused = !paused;
 
   $("pause-overlay").classList.toggle("show", paused);
+
   $("pause-button").textContent = paused ? "▶" : "Ⅱ";
 
   if (paused) {
@@ -157,16 +198,26 @@ function togglePause() {
 function ensureAudio() {
   if (!audioContext) {
     const AudioCtor = window.AudioContext || window.webkitAudioContext;
+
     if (!AudioCtor) return null;
+
     audioContext = new AudioCtor();
   }
 
-  if (audioContext.state === "suspended") audioContext.resume();
+  if (audioContext.state === "suspended") {
+    audioContext.resume();
+  }
 
   return audioContext;
 }
 
-function tone(frequency, duration = 0.12, type = "square", volume = 0.08, delay = 0) {
+function tone(
+  frequency,
+  duration = 0.12,
+  type = "square",
+  volume = 0.08,
+  delay = 0
+) {
   const ac = ensureAudio();
 
   if (!ac || muted || effectsVolume <= 0) return;
@@ -175,13 +226,22 @@ function tone(frequency, duration = 0.12, type = "square", volume = 0.08, delay 
   const gain = ac.createGain();
 
   oscillator.type = type;
-  oscillator.frequency.setValueAtTime(frequency, ac.currentTime + delay);
 
-  gain.gain.setValueAtTime(0.0001, ac.currentTime + delay);
+  oscillator.frequency.setValueAtTime(
+    frequency,
+    ac.currentTime + delay
+  );
+
+  gain.gain.setValueAtTime(
+    0.0001,
+    ac.currentTime + delay
+  );
+
   gain.gain.exponentialRampToValueAtTime(
     Math.max(0.0001, volume * effectsVolume),
     ac.currentTime + delay + 0.012
   );
+
   gain.gain.exponentialRampToValueAtTime(
     0.0001,
     ac.currentTime + delay + duration
@@ -195,7 +255,9 @@ function tone(frequency, duration = 0.12, type = "square", volume = 0.08, delay 
 }
 
 function sfx(kind) {
-  if (kind === "jump") tone(390, .09, "square", .045);
+  if (kind === "jump") {
+    tone(390, .09, "square", .045);
+  }
 
   if (kind === "double") {
     tone(520, .09, "triangle", .05);
@@ -207,17 +269,14 @@ function sfx(kind) {
     tone(1175, .09, "sine", .04, .06);
   }
 
-  if (kind === "dunk") {
-    tone(250, .13, "triangle", .07);
-    tone(150, .12, "square", .035, .08);
-  }
-
   if (kind === "bonus") {
     tone(660, .12, "sine", .05);
     tone(880, .16, "sine", .05, .1);
   }
 
-  if (kind === "hit") tone(240, .18, "triangle", .04);
+  if (kind === "hit") {
+    tone(240, .18, "triangle", .04);
+  }
 
   if (kind === "record") {
     tone(523, .12, "sine", .05);
@@ -227,24 +286,37 @@ function sfx(kind) {
 }
 
 const melody = [
-  392, 494, 587, 494, 440, 523, 659, 523,
-  349, 440, 523, 440, 392, 494, 587, 659
+  392, 494, 587, 494,
+  440, 523, 659, 523,
+  349, 440, 523, 440,
+  392, 494, 587, 659
 ];
 
 function musicNote() {
   const ac = ensureAudio();
 
-  if (!ac || muted || musicVolume <= 0 || paused || !running) return;
+  if (!ac || muted || musicVolume <= 0 || paused || !running) {
+    return;
+  }
 
   const osc = ac.createOscillator();
   const gain = ac.createGain();
 
   osc.type = "triangle";
+
   osc.frequency.value = melody[musicStep % melody.length];
 
   gain.gain.setValueAtTime(0.0001, ac.currentTime);
-  gain.gain.linearRampToValueAtTime(0.025 * musicVolume, ac.currentTime + .04);
-  gain.gain.linearRampToValueAtTime(0.0001, ac.currentTime + .42);
+
+  gain.gain.linearRampToValueAtTime(
+    0.025 * musicVolume,
+    ac.currentTime + .04
+  );
+
+  gain.gain.linearRampToValueAtTime(
+    0.0001,
+    ac.currentTime + .42
+  );
 
   osc.connect(gain);
   gain.connect(ac.destination);
@@ -256,7 +328,15 @@ function musicNote() {
 }
 
 function startMusic() {
-  if (musicTimer || muted || musicVolume <= 0 || !running || paused) return;
+  if (
+    musicTimer ||
+    muted ||
+    musicVolume <= 0 ||
+    !running ||
+    paused
+  ) {
+    return;
+  }
 
   ensureAudio();
   musicNote();
@@ -265,7 +345,10 @@ function startMusic() {
 }
 
 function stopMusic() {
-  if (musicTimer) clearInterval(musicTimer);
+  if (musicTimer) {
+    clearInterval(musicTimer);
+  }
+
   musicTimer = null;
 }
 
@@ -278,15 +361,21 @@ function toggleMute() {
 
   $("mute-button").textContent = muted ? "UNMUTE" : "MUTE ALL";
 
-  if (muted) stopMusic();
-  else startMusic();
+  if (muted) {
+    stopMusic();
+  } else {
+    startMusic();
+  }
 }
 
 $("music-volume").addEventListener("input", event => {
   musicVolume = Number(event.target.value) / 100;
 
-  if (musicVolume === 0) stopMusic();
-  else startMusic();
+  if (musicVolume === 0) {
+    stopMusic();
+  } else {
+    startMusic();
+  }
 });
 
 $("effects-volume").addEventListener("input", event => {
@@ -295,44 +384,42 @@ $("effects-volume").addEventListener("input", event => {
 
 /* CONTROLS */
 
+/* Normal jump and double jump only. */
+
 function jump() {
   if (!running || paused || !player) return;
 
   if (player.jumps < 2) {
     player.velocityY = player.jumps === 0 ? -7.5 : -11;
+
     player.jumps++;
-    player.dunking = false;
 
     sfx(player.jumps === 1 ? "jump" : "double");
 
     if (player.jumps === 2) {
-      addPopup("DOUBLE JUMP!", player.x + 8, player.y - 10, "#fff0b7");
+      addPopup(
+        "DOUBLE JUMP!",
+        player.x + 8,
+        player.y - 10,
+        "#fff0b7"
+      );
     }
   }
 }
 
-function skyDunk() {
-  if (!running || paused || !player) return;
-
-  if (player.jumps === 0 || player.y >= ground - player.height - 2) return;
-
-  player.dunking = true;
-  player.velocityY = 13;
-
-  sfx("dunk");
-}
-
 document.addEventListener("keydown", event => {
-  if (["Space", "ArrowUp", "ArrowDown"].includes(event.code)) {
+  if (["Space", "ArrowUp"].includes(event.code)) {
     event.preventDefault();
   }
 
-  if (event.code === "Space" || event.code === "ArrowUp") jump();
-
-  if (event.code === "ArrowDown" || event.code === "KeyS") skyDunk();
+  if (event.code === "Space" || event.code === "ArrowUp") {
+    jump();
+  }
 
   if (event.code === "KeyP" || event.code === "Escape") {
-    if (running || paused) togglePause();
+    if (running || paused) {
+      togglePause();
+    }
   }
 });
 
@@ -341,25 +428,25 @@ $("jump-button").addEventListener("pointerdown", event => {
   jump();
 });
 
-$("dunk-button").addEventListener("pointerdown", event => {
-  event.preventDefault();
-  skyDunk();
-});
+/* Tapping anywhere on the game canvas jumps. */
 
 canvas.addEventListener("pointerdown", event => {
   if (!running || paused) return;
 
-  const rect = canvas.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-
-  if (x > rect.width * .68) skyDunk();
-  else jump();
+  event.preventDefault();
+  jump();
 });
 
 /* SCORE AND POPUPS */
 
 function addPopup(text, x, y, color = "#fff0b7") {
-  popups.push({ text, x, y, life: 52, color });
+  popups.push({
+    text,
+    x,
+    y,
+    life: 52,
+    color
+  });
 }
 
 function updateHUD() {
@@ -368,10 +455,17 @@ function updateHUD() {
   $("run-coins").textContent = runCoins;
   $("game-best").textContent = stats.best;
 
-  $("difficulty-label").textContent =
-    score < 100 ? "EASY" :
-    score < 300 ? "WARMING UP" :
-    score < 600 ? "QUICK" : "EXPERT";
+  if (score < 300) {
+    $("difficulty-label").textContent = "EASY";
+  } else if (score < 600) {
+    $("difficulty-label").textContent = "WARMING UP";
+  } else if (score < 1000) {
+    $("difficulty-label").textContent = "QUICK";
+  } else if (score < 1500) {
+    $("difficulty-label").textContent = "VERY HARD";
+  } else {
+    $("difficulty-label").textContent = "EXTREME!";
+  }
 }
 
 /* BACKGROUND */
@@ -397,13 +491,14 @@ function drawBackground() {
   ctx.fillStyle = "#e8c9e6";
 
   for (let i = 0; i < 4; i++) {
-    const x = ((i * 260 - frame * .18) % 1000 + 1000) % 1000;
+    const x = (
+      (i * 260 - frame * .18) % 1000 + 1000
+    ) % 1000;
 
     ctx.fillRect(x, 190 + (i % 2) * 20, 58, 10);
     ctx.fillRect(x + 13, 182 + (i % 2) * 20, 32, 10);
   }
 
-  // Plain ground: no moving stripes or road markings.
   ctx.fillStyle = "#49365e";
   ctx.fillRect(0, ground, W, H - ground);
 
@@ -416,6 +511,7 @@ function drawBackground() {
 function drawBoy() {
   const x = Math.round(player.x);
   const y = Math.round(player.y);
+
   const runFrame = Math.floor(frame / 8) % 2;
 
   // Backpack
@@ -464,13 +560,10 @@ function drawBoy() {
   ctx.fillRect(x + 1, y + 29, 5, 9);
   ctx.fillRect(x + 30, y + 29, 5, 9);
 
-  // Trousers and boots
+  // Trousers
   ctx.fillStyle = "#39466e";
 
-  if (player.dunking) {
-    ctx.fillRect(x + 7, y + 39, 8, 8);
-    ctx.fillRect(x + 21, y + 39, 8, 8);
-  } else if (player.jumps > 0) {
+  if (player.jumps > 0) {
     ctx.fillRect(x + 7, y + 41, 9, 7);
     ctx.fillRect(x + 21, y + 41, 9, 7);
   } else if (runFrame === 0) {
@@ -481,6 +574,7 @@ function drawBoy() {
     ctx.fillRect(x + 21, y + 41, 8, 7);
   }
 
+  // Boots
   ctx.fillStyle = "#f3d58d";
   ctx.fillRect(x + 4, y + 46, 12, 3);
   ctx.fillRect(x + 19, y + 46, 12, 3);
@@ -489,17 +583,39 @@ function drawBoy() {
 /* OBSTACLES AND CREATURES */
 
 function chooseObstacleType() {
+  const roll = Math.random();
+
+  // Bird waves become available at 650 points.
+  if (score >= 650 && roll < 0.30) {
+    return "birdWave";
+  }
+
   const available = ["rock", "bush"];
 
-  if (score >= 20) available.push("slime");
-  if (score >= 55) available.push("flyer");
-  if (score >= 120) available.push("tower");
+  if (score >= 20) {
+    available.push("slime");
+  }
 
-  return available[Math.floor(Math.random() * available.length)];
+  if (score >= 55) {
+    available.push("flyer");
+  }
+
+  if (score >= 120) {
+    available.push("tower");
+  }
+
+  return available[
+    Math.floor(Math.random() * available.length)
+  ];
 }
 
 function createObstacle() {
   const type = chooseObstacleType();
+
+  if (type === "birdWave") {
+    createBirdWave();
+    return;
+  }
 
   const obstacle = {
     type,
@@ -538,12 +654,95 @@ function createObstacle() {
   obstacles.push(obstacle);
 }
 
+/* RANDOM BIRD WAVES */
+
+function createBirdWave() {
+  const groupSizes = [1, 2, 4];
+
+  const count = groupSizes[
+    Math.floor(Math.random() * groupSizes.length)
+  ];
+
+  for (let i = 0; i < count; i++) {
+    const isDecoy =
+      score >= 850 && Math.random() < 0.42;
+
+    birdQueue.push({
+      type: isDecoy ? "decoyBird" : "bird",
+      gap: i === 0 ? 0 : 22 + Math.random() * 65
+    });
+  }
+}
+
+function createBird(type) {
+  obstacles.push({
+    type,
+    x: W + 20,
+    y: type === "bird"
+      ? ground - 68
+      : ground - 120,
+    width: 36,
+    height: 24,
+    phase: Math.random() * 6,
+    passed: false
+  });
+}
+
+function drawBird(o, x, y, decoy = false) {
+  const wingFrame = Math.floor(frame / 7 + o.phase) % 2;
+
+  const bodyColor = decoy ? "#a68cc8" : "#7662a5";
+  const wingColor = decoy ? "#d4b9e8" : "#514477";
+  const bellyColor = decoy ? "#f0d7ed" : "#e9c9e9";
+
+  // Wings
+  ctx.fillStyle = wingColor;
+
+  if (wingFrame === 0) {
+    ctx.fillRect(x + 4, y + 3, 10, 5);
+    ctx.fillRect(x + 20, y + 3, 10, 5);
+  } else {
+    ctx.fillRect(x + 5, y - 2, 9, 8);
+    ctx.fillRect(x + 21, y - 2, 9, 8);
+  }
+
+  // Body
+  ctx.fillStyle = bodyColor;
+  ctx.fillRect(x + 8, y + 7, 21, 12);
+
+  // Head
+  ctx.fillRect(x + 23, y + 4, 9, 10);
+
+  // Belly
+  ctx.fillStyle = bellyColor;
+  ctx.fillRect(x + 13, y + 14, 11, 5);
+
+  // Eye
+  ctx.fillStyle = "#382b3b";
+  ctx.fillRect(x + 28, y + 7, 2, 2);
+
+  // Beak
+  ctx.fillStyle = "#f3d58d";
+  ctx.fillRect(x + 32, y + 10, 5, 3);
+
+  // Tail
+  ctx.fillStyle = wingColor;
+  ctx.fillRect(x + 2, y + 10, 7, 4);
+}
+
 function drawObstacles() {
   obstacles.forEach(o => {
     const x = Math.round(o.x);
 
     const y = Math.round(
-      o.y + (o.type === "slime" ? Math.sin(frame * .12 + o.phase) * 2 : 0)
+      o.y +
+      (
+        o.type === "slime"
+          ? Math.sin(frame * .12 + o.phase) * 2
+          : o.type === "bird" || o.type === "decoyBird"
+            ? Math.sin(frame * .08 + o.phase) * 3
+            : 0
+      )
     );
 
     if (o.type === "rock") {
@@ -607,6 +806,14 @@ function drawObstacles() {
       ctx.fillStyle = "#e4c8ef";
       ctx.fillRect(x + 16, y + 11, 4, 22);
     }
+
+    else if (o.type === "bird") {
+      drawBird(o, x, y, false);
+    }
+
+    else if (o.type === "decoyBird") {
+      drawBird(o, x, y, true);
+    }
   });
 }
 
@@ -623,12 +830,26 @@ function createCoin() {
 function drawCoins() {
   coins.forEach(c => {
     ctx.fillStyle = "#f7d77f";
-    ctx.fillRect(Math.round(c.x - 6), Math.round(c.y - 8), 12, 16);
+
+    ctx.fillRect(
+      Math.round(c.x - 6),
+      Math.round(c.y - 8),
+      12,
+      16
+    );
 
     ctx.fillStyle = "#fff0b7";
-    ctx.fillRect(Math.round(c.x - 2), Math.round(c.y - 5), 4, 10);
+
+    ctx.fillRect(
+      Math.round(c.x - 2),
+      Math.round(c.y - 5),
+      4,
+      10
+    );
   });
 }
+
+/* COLLISION */
 
 function overlaps(a, b) {
   return (
@@ -639,37 +860,51 @@ function overlaps(a, b) {
   );
 }
 
-function defeatCreature(obstacle, index) {
-  const name = obstacle.type === "slime" ? "MOCHI SLIME" : "GLOW MOTH";
+/* DIFFICULTY */
 
-  obstacles.splice(index, 1);
-  score += 25;
-  combo++;
-
-  const id = obstacle.type;
-
-  if (!stats.creatures.includes(id)) {
-    stats.creatures.push(id);
-    saveStats();
-    addPopup("NEW CREATURE!", player.x + 5, player.y - 24, "#fff0b7");
+function getGameSpeed() {
+  if (score < 300) {
+    return 4 + (score / 300);
   }
 
-  addPopup(`${name} +25`, player.x + 8, player.y - 5, "#fff0b7");
-
-  if (combo >= nextComboBonus) {
-    const bonus = combo >= 4 ? 50 : 25;
-
-    score += bonus;
-
-    addPopup(`COMBO x${combo}  +${bonus}`, 390, 75, "#ffe89b");
-
-    nextComboBonus = combo + 2;
-    sfx("bonus");
-  } else {
-    sfx("hit");
+  if (score < 600) {
+    return 5 + ((score - 300) / 300);
   }
 
-  updateHUD();
+  if (score < 1000) {
+    return 6 + ((score - 600) / 400) * 4;
+  }
+
+  if (score < 1200) {
+    return 10 + ((score - 1000) / 200) * 2;
+  }
+
+  if (score < 1500) {
+    return 12 + ((score - 1200) / 300) * 3;
+  }
+
+  if (score < 2000) {
+    return 15 + ((score - 1500) / 500) * 2;
+  }
+
+  if (score < 2500) {
+    return 17 + ((score - 2000) / 500) * 2;
+  }
+
+  return Math.min(
+    21,
+    19 + ((score - 2500) / 1000) * 2
+  );
+}
+
+/* OBSTACLE SPAWNING */
+
+function getSpawnDelay() {
+  const reduction = Math.min(score / 45, 36);
+
+  const base = Math.max(76, 112 - reduction);
+
+  return Math.round(base + Math.random() * 25);
 }
 
 /* GAME UPDATE */
@@ -677,34 +912,48 @@ function defeatCreature(obstacle, index) {
 function update() {
   frame++;
 
-  player.velocityY += player.dunking ? .9 : .62;
+  speed = getGameSpeed();
+
+  // Player physics.
+  player.velocityY += 0.62;
   player.y += player.velocityY;
 
+  // Ground collision.
   if (player.y >= ground - player.height) {
     player.y = ground - player.height;
     player.velocityY = 0;
     player.jumps = 0;
-    player.dunking = false;
-    player.dunkHit = false;
   }
 
-  speed = Math.min(4 + score / 230, 8.5);
-
+  // Spawn normal obstacles and bird waves.
   spawnTimer--;
 
   if (spawnTimer <= 0) {
     createObstacle();
-
-    const delay = Math.max(66, 132 - score / 15);
-    spawnTimer = delay + Math.random() * 35;
+    spawnTimer = getSpawnDelay();
   }
 
+  // Spawn queued birds with random gaps.
+  if (birdQueue.length > 0) {
+    birdQueueTimer--;
+
+    if (birdQueueTimer <= 0) {
+      const nextBird = birdQueue.shift();
+
+      createBird(nextBird.type);
+
+      birdQueueTimer = Math.round(nextBird.gap);
+    }
+  }
+
+  // Move obstacles.
   obstacles.forEach(o => {
     o.x -= speed;
   });
 
-  obstacles = obstacles.filter(o => o.x > -60);
+  obstacles = obstacles.filter(o => o.x > -70);
 
+  // Spawn coins.
   coinTimer--;
 
   if (coinTimer <= 0) {
@@ -712,12 +961,14 @@ function update() {
     coinTimer = 95 + Math.random() * 65;
   }
 
+  // Move coins.
   coins.forEach(c => {
     c.x -= speed;
   });
 
   coins = coins.filter(c => c.x > -25);
 
+  // Player collision box.
   const playerBox = {
     x: player.x + 5,
     y: player.y + 5,
@@ -725,8 +976,14 @@ function update() {
     height: player.height - 7
   };
 
+  // Check obstacles.
   for (let i = obstacles.length - 1; i >= 0; i--) {
     const o = obstacles[i];
+
+    // Decoy birds are harmless.
+    if (o.type === "decoyBird") {
+      continue;
+    }
 
     const box = {
       x: o.x + 3,
@@ -736,17 +993,12 @@ function update() {
     };
 
     if (overlaps(playerBox, box)) {
-      if (player.dunking && (o.type === "slime" || o.type === "flyer")) {
-        defeatCreature(o, i);
-        continue;
-      }
-
-      combo = 0;
       endGame();
       return;
     }
   }
 
+  // Collect coins.
   coins = coins.filter(c => {
     const coinBox = {
       x: c.x - 8,
@@ -758,9 +1010,16 @@ function update() {
     if (overlaps(playerBox, coinBox)) {
       runCoins++;
       stats.totalCoins++;
+
       score += 5;
 
-      addPopup("+5", c.x, c.y - 10, "#fff0b7");
+      addPopup(
+        "+5",
+        c.x,
+        c.y - 10,
+        "#fff0b7"
+      );
+
       sfx("coin");
       saveStats();
 
@@ -770,10 +1029,12 @@ function update() {
     return true;
   });
 
-  score += .12;
+  // Score increases over time.
+  score += 0.12;
 
+  // Update popups.
   popups.forEach(p => {
-    p.y -= .35;
+    p.y -= 0.35;
     p.life--;
   });
 
@@ -786,6 +1047,7 @@ function update() {
 
 function drawPopups() {
   ctx.save();
+
   ctx.font = "bold 13px Nunito, sans-serif";
   ctx.textAlign = "center";
 
@@ -818,11 +1080,14 @@ function draw() {
   }
 }
 
+/* GAME OVER */
+
 function endGame() {
   running = false;
 
   cancelAnimationFrame(animationId);
   stopMusic();
+
   sfx("hit");
 
   saveRun();
@@ -832,12 +1097,18 @@ function endGame() {
   $("final-best").textContent = stats.best;
 
   $("record-message").textContent =
-    newRecord && Math.floor(score) > 0 ? "NEW PERSONAL BEST!" : "";
+    newRecord && Math.floor(score) > 0
+      ? "NEW PERSONAL BEST!"
+      : "";
 
   $("game-over").classList.add("show");
 
-  if (newRecord) sfx("record");
+  if (newRecord) {
+    sfx("record");
+  }
 }
+
+/* SOUND BUTTON */
 
 function updateSoundButton() {
   $("mute-button").textContent = muted ? "UNMUTE" : "MUTE ALL";
