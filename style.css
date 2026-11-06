@@ -161,7 +161,7 @@ h1 span {
   font-weight: 700;
 }
 
-/* GAME HUD */
+
 
 #game-screen {
   padding: 22px 25px 20px;
@@ -306,7 +306,6 @@ h1 span {
   font-weight: 900;
 }
 
-/* OVERLAYS */
 
 .overlay {
   display: none;
@@ -493,9 +492,6 @@ h1 span {
   }
 }
 
-/* =====================================
-   STARBOUND HOMEPAGE COMMUNITY
-===================================== */
 
 .player-name-box {
   width: min(100%, 360px);
@@ -667,9 +663,6 @@ h1 span {
   }
 }
 
-/* =====================================
-   STARBOUND! HOMEPAGE REDESIGN
-===================================== */
 
 #home-screen {
   position: relative;
@@ -733,7 +726,7 @@ h1 span {
   color: var(--lavender);
 }
 
-/* Small animated character */
+
 
 .home-character-wrap {
   position: relative;
@@ -776,7 +769,6 @@ h1 span {
   animation-delay: .8s;
 }
 
-/* Name area */
 
 #home-screen .player-name-box {
   margin: 5px auto 14px;
@@ -816,7 +808,6 @@ h1 span {
   line-height: 1.5;
 }
 
-/* Play button */
 
 .home-play-button {
   width: min(100%, 350px);
@@ -827,7 +818,7 @@ h1 span {
   letter-spacing: .3px;
 }
 
-/* Actual homepage navigation buttons */
+
 
 .home-navigation {
   display: flex;
@@ -872,7 +863,7 @@ h1 span {
   box-shadow: 0 1px 0 #211a36;
 }
 
-/* Compact stats */
+
 
 #home-screen .home-stats {
   gap: clamp(15px, 5vw, 45px);
@@ -887,7 +878,7 @@ h1 span {
   font-size: 8px;
 }
 
-/* Settings and leaderboard panels */
+
 
 .home-extra-panel {
   position: relative;
@@ -941,7 +932,6 @@ h1 span {
   color: var(--ink);
 }
 
-/* Settings */
 
 .home-setting-row {
   margin: 15px 0;
@@ -1000,7 +990,7 @@ h1 span {
   font-weight: 800;
 }
 
-/* Leaderboard */
+
 
 #home-leaderboard-panel .leaderboard-subtitle {
   margin: 0 0 14px;
@@ -1024,13 +1014,12 @@ h1 span {
   margin-bottom: 0;
 }
 
-/* Footer */
 
 #home-screen .footer {
   margin-top: 18px;
 }
 
-/* Mobile homepage */
+
 
 @media (max-width: 650px) {
   body {
