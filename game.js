@@ -38,8 +38,6 @@ let musicStep = 0;
 
 let newRecord = false;
 
-/* SAVE DATA */
-
 function loadStats() {
   try {
     return {
@@ -78,15 +76,11 @@ function updateStatsDisplay() {
 
 updateStatsDisplay();
 
-/* SCREENS */
-
 function showScreen(id) {
   ["home-screen", "game-screen"].forEach(screenId => {
     $(screenId).classList.toggle("active", screenId === id);
   });
 }
-
-/* START GAME */
 
 function startGame() {
   cancelAnimationFrame(animationId);
@@ -173,8 +167,6 @@ function saveRun() {
   saveStats();
 }
 
-/* PAUSE */
-
 function togglePause() {
   if (!running && !paused) return;
 
@@ -192,8 +184,6 @@ function togglePause() {
     draw();
   }
 }
-
-/* AUDIO */
 
 function ensureAudio() {
   if (!audioContext) {
@@ -382,10 +372,6 @@ $("effects-volume").addEventListener("input", event => {
   effectsVolume = Number(event.target.value) / 100;
 });
 
-/* CONTROLS */
-
-/* Normal jump and double jump only. */
-
 function jump() {
   if (!running || paused || !player) return;
 
@@ -428,16 +414,12 @@ $("jump-button").addEventListener("pointerdown", event => {
   jump();
 });
 
-/* Tapping anywhere on the game canvas jumps. */
-
 canvas.addEventListener("pointerdown", event => {
   if (!running || paused) return;
 
   event.preventDefault();
   jump();
 });
-
-/* SCORE AND POPUPS */
 
 function addPopup(text, x, y, color = "#fff0b7") {
   popups.push({
@@ -467,8 +449,6 @@ function updateHUD() {
     $("difficulty-label").textContent = "EXTREME!";
   }
 }
-
-/* BACKGROUND */
 
 function drawBackground() {
   const sky = ctx.createLinearGradient(0, 0, 0, H);
@@ -506,22 +486,18 @@ function drawBackground() {
   ctx.fillRect(0, ground, W, 6);
 }
 
-/* PLAYER */
-
 function drawBoy() {
   const x = Math.round(player.x);
   const y = Math.round(player.y);
 
   const runFrame = Math.floor(frame / 8) % 2;
 
-  // Backpack
   ctx.fillStyle = "#70458f";
   ctx.fillRect(x - 5, y + 24, 10, 17);
 
   ctx.fillStyle = "#bd83c9";
   ctx.fillRect(x - 4, y + 27, 7, 8);
 
-  // Hair and face
   ctx.fillStyle = "#49302b";
   ctx.fillRect(x + 5, y + 1, 25, 9);
   ctx.fillRect(x + 3, y + 7, 7, 8);
@@ -530,12 +506,10 @@ function drawBoy() {
   ctx.fillStyle = "#f2bd8d";
   ctx.fillRect(x + 7, y + 9, 22, 16);
 
-  // Hair fringe
   ctx.fillStyle = "#49302b";
   ctx.fillRect(x + 7, y + 8, 8, 4);
   ctx.fillRect(x + 19, y + 8, 8, 3);
 
-  // Eyes and smile
   ctx.fillStyle = "#382b3b";
   ctx.fillRect(x + 13, y + 15, 2, 3);
   ctx.fillRect(x + 23, y + 15, 2, 3);
@@ -543,24 +517,20 @@ function drawBoy() {
   ctx.fillStyle = "#a65d68";
   ctx.fillRect(x + 18, y + 21, 5, 1);
 
-  // Purple jacket
   ctx.fillStyle = "#7952a5";
   ctx.fillRect(x + 5, y + 25, 26, 17);
 
   ctx.fillStyle = "#b99ad8";
   ctx.fillRect(x + 17, y + 27, 2, 12);
 
-  // Scarf
   ctx.fillStyle = "#e99bc9";
   ctx.fillRect(x + 5, y + 23, 25, 5);
   ctx.fillRect(x + 25, y + 26, 5, 9);
 
-  // Arms
   ctx.fillStyle = "#f2bd8d";
   ctx.fillRect(x + 1, y + 29, 5, 9);
   ctx.fillRect(x + 30, y + 29, 5, 9);
 
-  // Trousers
   ctx.fillStyle = "#39466e";
 
   if (player.jumps > 0) {
@@ -574,18 +544,14 @@ function drawBoy() {
     ctx.fillRect(x + 21, y + 41, 8, 7);
   }
 
-  // Boots
   ctx.fillStyle = "#f3d58d";
   ctx.fillRect(x + 4, y + 46, 12, 3);
   ctx.fillRect(x + 19, y + 46, 12, 3);
 }
 
-/* OBSTACLES AND CREATURES */
-
 function chooseObstacleType() {
   const roll = Math.random();
 
-  // Bird waves become available at 650 points.
   if (score >= 650 && roll < 0.30) {
     return "birdWave";
   }
@@ -654,8 +620,6 @@ function createObstacle() {
   obstacles.push(obstacle);
 }
 
-/* RANDOM BIRD WAVES */
-
 function createBirdWave() {
   const groupSizes = [1, 2, 4];
 
@@ -695,7 +659,6 @@ function drawBird(o, x, y, decoy = false) {
   const wingColor = decoy ? "#d4b9e8" : "#514477";
   const bellyColor = decoy ? "#f0d7ed" : "#e9c9e9";
 
-  // Wings
   ctx.fillStyle = wingColor;
 
   if (wingFrame === 0) {
@@ -706,26 +669,20 @@ function drawBird(o, x, y, decoy = false) {
     ctx.fillRect(x + 21, y - 2, 9, 8);
   }
 
-  // Body
   ctx.fillStyle = bodyColor;
   ctx.fillRect(x + 8, y + 7, 21, 12);
 
-  // Head
   ctx.fillRect(x + 23, y + 4, 9, 10);
 
-  // Belly
   ctx.fillStyle = bellyColor;
   ctx.fillRect(x + 13, y + 14, 11, 5);
 
-  // Eye
   ctx.fillStyle = "#382b3b";
   ctx.fillRect(x + 28, y + 7, 2, 2);
 
-  // Beak
   ctx.fillStyle = "#f3d58d";
   ctx.fillRect(x + 32, y + 10, 5, 3);
 
-  // Tail
   ctx.fillStyle = wingColor;
   ctx.fillRect(x + 2, y + 10, 7, 4);
 }
@@ -817,8 +774,6 @@ function drawObstacles() {
   });
 }
 
-/* COINS */
-
 function createCoin() {
   coins.push({
     x: W + 10,
@@ -849,8 +804,6 @@ function drawCoins() {
   });
 }
 
-/* COLLISION */
-
 function overlaps(a, b) {
   return (
     a.x < b.x + b.width &&
@@ -859,8 +812,6 @@ function overlaps(a, b) {
     a.y + a.height > b.y
   );
 }
-
-/* DIFFICULTY */
 
 function getGameSpeed() {
   if (score < 300) {
@@ -897,8 +848,6 @@ function getGameSpeed() {
   );
 }
 
-/* OBSTACLE SPAWNING */
-
 function getSpawnDelay() {
   const reduction = Math.min(score / 45, 36);
 
@@ -907,25 +856,20 @@ function getSpawnDelay() {
   return Math.round(base + Math.random() * 25);
 }
 
-/* GAME UPDATE */
-
 function update() {
   frame++;
 
   speed = getGameSpeed();
 
-  // Player physics.
   player.velocityY += 0.62;
   player.y += player.velocityY;
 
-  // Ground collision.
   if (player.y >= ground - player.height) {
     player.y = ground - player.height;
     player.velocityY = 0;
     player.jumps = 0;
   }
 
-  // Spawn normal obstacles and bird waves.
   spawnTimer--;
 
   if (spawnTimer <= 0) {
@@ -933,7 +877,6 @@ function update() {
     spawnTimer = getSpawnDelay();
   }
 
-  // Spawn queued birds with random gaps.
   if (birdQueue.length > 0) {
     birdQueueTimer--;
 
@@ -946,14 +889,12 @@ function update() {
     }
   }
 
-  // Move obstacles.
   obstacles.forEach(o => {
     o.x -= speed;
   });
 
   obstacles = obstacles.filter(o => o.x > -70);
 
-  // Spawn coins.
   coinTimer--;
 
   if (coinTimer <= 0) {
@@ -961,14 +902,12 @@ function update() {
     coinTimer = 95 + Math.random() * 65;
   }
 
-  // Move coins.
   coins.forEach(c => {
     c.x -= speed;
   });
 
   coins = coins.filter(c => c.x > -25);
 
-  // Player collision box.
   const playerBox = {
     x: player.x + 5,
     y: player.y + 5,
@@ -976,11 +915,9 @@ function update() {
     height: player.height - 7
   };
 
-  // Check obstacles.
   for (let i = obstacles.length - 1; i >= 0; i--) {
     const o = obstacles[i];
 
-    // Decoy birds are harmless.
     if (o.type === "decoyBird") {
       continue;
     }
@@ -998,7 +935,6 @@ function update() {
     }
   }
 
-  // Collect coins.
   coins = coins.filter(c => {
     const coinBox = {
       x: c.x - 8,
@@ -1029,10 +965,8 @@ function update() {
     return true;
   });
 
-  // Score increases over time.
   score += 0.12;
 
-  // Update popups.
   popups.forEach(p => {
     p.y -= 0.35;
     p.life--;
@@ -1042,8 +976,6 @@ function update() {
 
   updateHUD();
 }
-
-/* DRAWING */
 
 function drawPopups() {
   ctx.save();
@@ -1080,8 +1012,6 @@ function draw() {
   }
 }
 
-/* GAME OVER */
-
 function endGame() {
   running = false;
 
@@ -1107,8 +1037,6 @@ function endGame() {
     sfx("record");
   }
 }
-
-/* SOUND BUTTON */
 
 function updateSoundButton() {
   $("mute-button").textContent = muted ? "UNMUTE" : "MUTE ALL";
