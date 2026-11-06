@@ -1,24 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-  <meta name="description" content="STARBOUND! — A tiny endless adventure. Play a pixel-inspired endless runner, collect coins and compete for high scores.">
-
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="STARBOUND!">
-<meta property="og:title" content="STARBOUND! — Play, Compete, Climb">
-<meta property="og:description" content="A tiny endless adventure. Jump, dodge obstacles, collect coins and compete for high scores!">
-<meta property="og:url" content="https://pulo-11.github.io/STARBOUND/">
-<meta property="og:image" content="https://pulo-11.github.io/STARBOUND/starbound-thumbnail.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="627">
-<meta property="og:image:alt" content="STARBOUND! pixel-art game title card created by Pulokali Achumi">
-
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="STARBOUND!">
-<meta name="twitter:description" content="A tiny endless adventure.">
-<meta name="twitter:image" content="https://pulo-11.github.io/STARBOUND/starbound-thumbnail.png">
-  
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#302748">
@@ -34,7 +16,6 @@
 <body>
   <main class="game-container">
 
- 
     <section id="home-screen" class="screen active">
 
       <div class="home-sparkle sparkle-one">✦</div>
@@ -49,13 +30,14 @@
       <p class="creator">Created by Pulokali Achumi</p>
       <p class="intro">A tiny endless adventure.</p>
 
-     
+      
       <div class="home-character-wrap" aria-label="Your STARBOUND adventurer">
         <span class="character-sparkle character-sparkle-left">✦</span>
         <canvas id="home-character" width="100" height="120"></canvas>
         <span class="character-sparkle character-sparkle-right">✧</span>
       </div>
 
+      
       <div class="player-name-box">
         <label for="player-name">YOUR STARBOUND NAME</label>
 
@@ -76,12 +58,10 @@
         </p>
       </div>
 
-    
       <button id="home-play-button" class="main-button home-play-button" onclick="startGame()">
         ✦ PLAY ✦
       </button>
 
-      <!-- Real homepage navigation buttons -->
       <div class="home-navigation">
         <button id="home-leaderboard-button" class="home-nav-button">
           <span class="nav-icon">🏆</span>
@@ -136,7 +116,6 @@
           <h3>HOW TO PLAY</h3>
           <p>SPACE / ↑ — Jump</p>
           <p>Jump again — Double jump</p>
-          <p>↓ — Sky dunk while airborne</p>
           <p>Collect coins and avoid obstacles!</p>
         </div>
       </section>
@@ -179,6 +158,8 @@
 
       <p class="footer">Made with a little stardust. ♡</p>
     </section>
+
+  
     
     <section id="game-screen" class="screen">
 
@@ -242,11 +223,10 @@
         </div>
       </div>
 
-      <p id="game-message">SPACE / ↑ TO JUMP · ↓ TO SKY DUNK</p>
+      <p id="game-message">SPACE / ↑ TO JUMP </p>
 
       <div class="mobile-controls">
-        <button id="dunk-button" class="control-button secondary-control">
-          DUNK ↓
+    
         </button>
         <button id="jump-button" class="control-button">
           JUMP ↑
